@@ -1,16 +1,20 @@
-[nastya@oraclelinuxlab ~]$ sudo dnf install nfs-utils
+#на сервере установлен Oracle Linux 9 в VirtualBox
+
+#создаем директорию, которую будем шарить на клиенте
 [nastya@oraclelinuxlab ~]$ sudo mkdir /share
+
+#вносим необходимые настройки в /etc/exports и применяем их
 [nastya@oraclelinuxlab ~]$ sudo vim /etc/exports
 [nastya@oraclelinuxlab ~]$ sudo cat /etc/exports
 /share 192.168.0.103(rw,sync,root_squash)
-
 [nastya@oraclelinuxlab ~]$ sudo exportfs -ra
 [nastya@oraclelinuxlab ~]$ sudo exportfs
 /share        	192.168.0.103
 
+#так как работаем с NFSv3, то пропишем порты для процессов, необходимых для его работы, чтобы открыть из в firewall
+#таковыми являются mountd, lockd и statd
 [nastya@oraclelinuxlab ~]$ sudo vim /etc/nfs.conf
-[nastya@oraclelinuxlab ~]$ sudo cat /etc/nfs.conf 
-[sudo] password for nastya: 
+[nastya@oraclelinuxlab ~]$ sudo cat /etc/nfs.conf
 #
 # This is a general configuration for the
 # NFS daemons and tools
@@ -112,41 +116,52 @@ port=662
 
 #tag1234 - Used for install purposes only 
 
+#открываем необходимые порты в firewall
 [nastya@oraclelinuxlab ~]$ sudo firewall-cmd --permanent --add-port=2049/tcp --add-port=111/tcp --add-port=892/tcp --add-port=662/tcp --add-port=32803/tcp
 success
 [nastya@oraclelinuxlab ~]$ sudo systemctl restart firewalld.service 
 [nastya@oraclelinuxlab ~]$ sudo firewall-cmd --list-ports 
 111/tcp 662/tcp 892/tcp 2049/tcp 32803/tcp
 
+#рестартуем nfs сервис, а также enable его
 [nastya@oraclelinuxlab ~]$ sudo systemctl restart nfs-server.service 
 [nastya@oraclelinuxlab ~]$ sudo systemctl enable nfs-server.service
 
+#убеждаемся, что настройки остались в силе
 [nastya@oraclelinuxlab ~]$ sudo exportfs
 /share        	192.168.0.103
+
+#создаем файлы в директории /share
 [nastya@oraclelinuxlab ~]$ cd /share/
+[nastya@oraclelinuxlab share]$ touch file
 [nastya@oraclelinuxlab share]$ ls
 file
-[nastya@oraclelinuxlab share]$ sudo vim Hello
-[nastya@oraclelinuxlab share]$ ls
-file  Hello
-[nastya@oraclelinuxlab share]$ cat Hello 
-Hello!
 
+#после перезагрузки клиента было обнаружено, что каталог /share не монтируется автоматически, ни по ручной команде
+#поэтому открываем порты по udp
 [nastya@oraclelinuxlab ~]$ sudo firewall-cmd --permanent --add-port=2049/udp --add-port=111/udp --add-port=892/udp --add-port=662/udp --add-port=32803/udp
 [nastya@oraclelinuxlab ~]$ sudo systemctl restart firewalld.service 
 [nastya@oraclelinuxlab ~]$ sudo reboot
 
+#так как использовать no_root_squash является небезопасным и нежелательным, создаем пользователя, под которым будет происходить работа в каталоге /share/upload
 [nastya@oraclelinuxlab ~]$ sudo adduser nfs-user
 [nastya@oraclelinuxlab ~]$ sudo cat /etc/passwd
+...
 nfs-user:x:1001:1001::/home/nfs-user:/bin/bash
 
+#создаем директорию upload, в которой можно создавать, менять или удалять файлы
 [nastya@oraclelinuxlab ~]$ sudo mkdir /share/upload
+
+#делаем созданного ранее пользователя ее владельцем
 [nastya@oraclelinuxlab ~]$ sudo chown nfs-user:nfs-user /share/upload/
+
+#убеждаемся, что nfs-user является владельцем только каталога upload
 [nastya@oraclelinuxlab ~]$ ls -la / | grep share
 drwxr-xr-x.   3 root root   83 Feb 14 18:44 share
 [nastya@oraclelinuxlab ~]$ ls -la /share/ | grep upload
 drwxr-xr-x.  2 nfs-user nfs-user   6 Feb 14 18:44 upload
 
+#вносим необходимые изменения в файл /etc/exports
 [nastya@oraclelinuxlab ~]$ sudo vim /etc/exports
 [nastya@oraclelinuxlab ~]$ sudo cat /etc/exports
 /share 192.168.0.104(rw,all_squash,anonuid=1001,anongid=1001)
@@ -154,8 +169,11 @@ drwxr-xr-x.  2 nfs-user nfs-user   6 Feb 14 18:44 upload
 [nastya@oraclelinuxlab ~]$ sudo exportfs
 /share          192.168.0.103
 
+#проверяем содержимое директории /share
 [nastya@oraclelinuxlab share]$ ls
 file  upload
+
+#проверяем содержимое каталога /share/upload после того, как на клиенте там был создан файл test
 [nastya@oraclelinuxlab share]$ cd upload/
 [nastya@oraclelinuxlab upload]$ ls
 test
