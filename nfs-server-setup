@@ -1,0 +1,162 @@
+[nastya@oraclelinuxlab ~]$ sudo dnf install nfs-utils
+[nastya@oraclelinuxlab ~]$ sudo mkdir /share
+[nastya@oraclelinuxlab ~]$ sudo vim /etc/exports
+[nastya@oraclelinuxlab ~]$ sudo cat /etc/exports
+/share 192.168.0.103(rw,sync,root_squash)
+
+[nastya@oraclelinuxlab ~]$ sudo exportfs -ra
+[nastya@oraclelinuxlab ~]$ sudo exportfs
+/share        	192.168.0.103
+
+[nastya@oraclelinuxlab ~]$ sudo vim /etc/nfs.conf
+[nastya@oraclelinuxlab ~]$ sudo cat /etc/nfs.conf 
+[sudo] password for nastya: 
+#
+# This is a general configuration for the
+# NFS daemons and tools
+#
+[general]
+# pipefs-directory=/var/lib/nfs/rpc_pipefs
+#
+[nfsrahead]
+# nfs=15000
+# nfs4=16000
+#
+[exports]
+# rootdir=/export
+#
+[exportfs]
+# debug=0
+#
+[gssd]
+# verbosity=0
+# rpc-verbosity=0
+# use-memcache=0
+# use-machine-creds=1
+use-gss-proxy=1
+# avoid-dns=1
+# limit-to-legacy-enctypes=0
+# context-timeout=0
+# rpc-timeout=5
+# keytab-file=/etc/krb5.keytab
+# cred-cache-directory=
+# preferred-realm=
+# set-home=1
+# upcall-timeout=30
+# cancel-timed-out-upcalls=0
+#
+[lockd]
+port=32803
+# udp-port=0
+#
+[exportd]
+# debug="all|auth|call|general|parse"
+# manage-gids=n
+# state-directory-path=/var/lib/nfs
+# threads=1
+# cache-use-ipaddr=n
+# ttl=1800
+[mountd]
+# debug="all|auth|call|general|parse"
+# manage-gids=n
+# descriptors=0
+port=892
+# threads=1
+# reverse-lookup=n
+# state-directory-path=/var/lib/nfs
+# ha-callout=
+# cache-use-ipaddr=n
+# ttl=1800
+#
+[nfsdcld]
+# debug=0
+# storagedir=/var/lib/nfs/nfsdcld
+#
+[nfsdcltrack]
+# debug=0
+# storagedir=/var/lib/nfs/nfsdcltrack
+#
+[nfsd]
+# debug=0
+# threads=8
+# host=
+# port=0
+# grace-time=90
+# lease-time=90
+# udp=n
+# tcp=y
+# vers3=y
+# vers4=y
+# vers4.0=y
+# vers4.1=y
+# vers4.2=y
+rdma=y
+rdma-port=20049
+
+[statd]
+# debug=0
+port=662
+# outgoing-port=0
+# name=
+# state-directory-path=/var/lib/nfs/statd
+# ha-callout=
+# no-notify=0
+#
+[sm-notify]
+# debug=0
+# force=0
+# retry-time=900
+# outgoing-port=
+# outgoing-addr=
+# lift-grace=y
+
+#tag1234 - Used for install purposes only 
+
+[nastya@oraclelinuxlab ~]$ sudo firewall-cmd --permanent --add-port=2049/tcp --add-port=111/tcp --add-port=892/tcp --add-port=662/tcp --add-port=32803/tcp
+success
+[nastya@oraclelinuxlab ~]$ sudo systemctl restart firewalld.service 
+[nastya@oraclelinuxlab ~]$ sudo firewall-cmd --list-ports 
+111/tcp 662/tcp 892/tcp 2049/tcp 32803/tcp
+
+[nastya@oraclelinuxlab ~]$ sudo systemctl restart nfs-server.service 
+[nastya@oraclelinuxlab ~]$ sudo systemctl enable nfs-server.service
+
+[nastya@oraclelinuxlab ~]$ sudo exportfs
+/share        	192.168.0.103
+[nastya@oraclelinuxlab ~]$ cd /share/
+[nastya@oraclelinuxlab share]$ ls
+file
+[nastya@oraclelinuxlab share]$ sudo vim Hello
+[nastya@oraclelinuxlab share]$ ls
+file  Hello
+[nastya@oraclelinuxlab share]$ cat Hello 
+Hello!
+
+[nastya@oraclelinuxlab ~]$ sudo firewall-cmd --permanent --add-port=2049/udp --add-port=111/udp --add-port=892/udp --add-port=662/udp --add-port=32803/udp
+[nastya@oraclelinuxlab ~]$ sudo systemctl restart firewalld.service 
+[nastya@oraclelinuxlab ~]$ sudo reboot
+
+[nastya@oraclelinuxlab ~]$ sudo adduser nfs-user
+[nastya@oraclelinuxlab ~]$ sudo cat /etc/passwd
+nfs-user:x:1001:1001::/home/nfs-user:/bin/bash
+
+[nastya@oraclelinuxlab ~]$ sudo mkdir /share/upload
+[nastya@oraclelinuxlab ~]$ sudo chown nfs-user:nfs-user /share/upload/
+[nastya@oraclelinuxlab ~]$ ls -la / | grep share
+drwxr-xr-x.   3 root root   83 Feb 14 18:44 share
+[nastya@oraclelinuxlab ~]$ ls -la /share/ | grep upload
+drwxr-xr-x.  2 nfs-user nfs-user   6 Feb 14 18:44 upload
+
+[nastya@oraclelinuxlab ~]$ sudo vim /etc/exports
+[nastya@oraclelinuxlab ~]$ sudo cat /etc/exports
+/share 192.168.0.104(rw,all_squash,anonuid=1001,anongid=1001)
+[nastya@oraclelinuxlab ~]$ sudo exportfs -ra
+[nastya@oraclelinuxlab ~]$ sudo exportfs
+/share          192.168.0.103
+
+[nastya@oraclelinuxlab share]$ ls
+file  upload
+[nastya@oraclelinuxlab share]$ cd upload/
+[nastya@oraclelinuxlab upload]$ ls
+test
+

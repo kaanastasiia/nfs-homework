@@ -1,0 +1,63 @@
+nastya@ubuntulab:~$ sudo mount -o vers=3 192.168.0.102:/share /mnt/
+[sudo] password for nastya: 
+Created symlink /run/systemd/system/remote-fs.target.wants/rpc-statd.service → /lib/systemd/system/rpc-statd.service.
+
+nastya@ubuntulab:~$ ls /mnt/
+file
+nastya@ubuntulab:~$ cd /mnt/
+nastya@ubuntulab:/mnt$ ls
+file  Hello
+nastya@ubuntulab:/mnt$ cat Hello 
+Hello!
+
+nastya@ubuntulab:~$ sudo ss -tnlp
+State    Recv-Q   Send-Q     Local Address:Port      Peer Address:Port  Process                                                     
+LISTEN   0        64               0.0.0.0:39607          0.0.0.0:*                                                                 
+LISTEN   0        4096             0.0.0.0:53903          0.0.0.0:*      users:(("rpc.statd",pid=855,fd=9))                         
+LISTEN   0        4096       127.0.0.53%lo:53             0.0.0.0:*      users:(("systemd-resolve",pid=626,fd=14))                  
+LISTEN   0        4096             0.0.0.0:111            0.0.0.0:*      users:(("rpcbind",pid=624,fd=4),("systemd",pid=1,fd=58))   
+LISTEN   0        128            127.0.0.1:631            0.0.0.0:*      users:(("cupsd",pid=755,fd=7))                             
+LISTEN   0        128                [::1]:631               [::]:*      users:(("cupsd",pid=755,fd=6))                             
+LISTEN   0        64                  [::]:42089             [::]:*                                                                 
+LISTEN   0        4096                [::]:111               [::]:*      users:(("rpcbind",pid=624,fd=6),("systemd",pid=1,fd=64))   
+LISTEN   0        4096                [::]:54621             [::]:*      users:(("rpc.statd",pid=855,fd=11))                        
+nastya@ubuntulab:~$ sudo ufw allow 111/tcp
+Rule added
+Rule added (v6)
+nastya@ubuntulab:~$ sudo ufw allow 22/tcp
+Rule added
+Rule added (v6)
+nastya@ubuntulab:~$ sudo ufw allow 53903/tcp
+Rule added
+Rule added (v6)
+nastya@ubuntulab:~$ sudo ufw allow 54621/tcp
+Rule added
+Rule added (v6)
+nastya@ubuntulab:~$ 
+
+nastya@ubuntulab:~$ sudo vim /etc/fstab
+nastya@ubuntulab:~$ sudo cat /etc/fstab
+
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+/dev/mapper/vgubuntu-root /               ext4    errors=remount-ro 0       1
+# /boot/efi was on /dev/sda2 during installation
+UUID=FC66-1F35  /boot/efi       vfat    umask=0077      0       1
+/dev/mapper/vgubuntu-swap_1 none            swap    sw              0       0
+192.168.0.102:/share	/mnt	nfs 	nfsvers=3		0	0 
+
+nastya@ubuntulab:~$ cd /mnt/
+nastya@ubuntulab:/mnt$ ls
+file  upload
+nastya@ubuntulab:/mnt$ touch test
+touch: cannot touch 'test': Permission denied
+nastya@ubuntulab:/mnt$ cd upload/
+nastya@ubuntulab:/mnt/upload$ touch test
+nastya@ubuntulab:/mnt/upload$ ls
+test
+ 
