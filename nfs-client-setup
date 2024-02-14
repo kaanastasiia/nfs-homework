@@ -1,7 +1,6 @@
 #на клиенте установлена Ubuntu22.04 LTS
 
 nastya@ubuntulab:~$ sudo mount -o vers=3 192.168.0.102:/share /mnt/
-[sudo] password for nastya: 
 Created symlink /run/systemd/system/remote-fs.target.wants/rpc-statd.service → /lib/systemd/system/rpc-statd.service.
 
 #проверяем, что NFS успешно смотрирована. Ранее на сервере NFS мы создавали файл под названием "file".
