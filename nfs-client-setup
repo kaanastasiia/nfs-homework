@@ -7,11 +7,6 @@ Created symlink /run/systemd/system/remote-fs.target.wants/rpc-statd.service →
 #проверяем, что NFS успешно смотрирована. Ранее на сервере NFS мы создавали файл под названием "file".
 nastya@ubuntulab:~$ ls /mnt/
 file
-nastya@ubuntulab:~$ cd /mnt/
-nastya@ubuntulab:/mnt$ ls
-file  Hello
-nastya@ubuntulab:/mnt$ cat Hello 
-Hello!
 
 #проверяем, на каких портах слушает клиент, чтобы открыть их в firewall
 nastya@ubuntulab:~$ sudo ss -tnlp
