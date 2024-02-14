@@ -1,7 +1,10 @@
+#на клиенте установлена Ubuntu22.04 LTS
+
 nastya@ubuntulab:~$ sudo mount -o vers=3 192.168.0.102:/share /mnt/
 [sudo] password for nastya: 
 Created symlink /run/systemd/system/remote-fs.target.wants/rpc-statd.service → /lib/systemd/system/rpc-statd.service.
 
+#проверяем, что NFS успешно смотрирована. Ранее на сервере NFS мы создавали файл под названием "file".
 nastya@ubuntulab:~$ ls /mnt/
 file
 nastya@ubuntulab:~$ cd /mnt/
@@ -10,6 +13,7 @@ file  Hello
 nastya@ubuntulab:/mnt$ cat Hello 
 Hello!
 
+#проверяем, на каких портах слушает клиент, чтобы открыть их в firewall
 nastya@ubuntulab:~$ sudo ss -tnlp
 State    Recv-Q   Send-Q     Local Address:Port      Peer Address:Port  Process                                                     
 LISTEN   0        64               0.0.0.0:39607          0.0.0.0:*                                                                 
@@ -20,7 +24,9 @@ LISTEN   0        128            127.0.0.1:631            0.0.0.0:*      users:(
 LISTEN   0        128                [::1]:631               [::]:*      users:(("cupsd",pid=755,fd=6))                             
 LISTEN   0        64                  [::]:42089             [::]:*                                                                 
 LISTEN   0        4096                [::]:111               [::]:*      users:(("rpcbind",pid=624,fd=6),("systemd",pid=1,fd=64))   
-LISTEN   0        4096                [::]:54621             [::]:*      users:(("rpc.statd",pid=855,fd=11))                        
+LISTEN   0        4096                [::]:54621             [::]:*      users:(("rpc.statd",pid=855,fd=11))     
+
+#добавляем порты в ufw
 nastya@ubuntulab:~$ sudo ufw allow 111/tcp
 Rule added
 Rule added (v6)
@@ -33,8 +39,8 @@ Rule added (v6)
 nastya@ubuntulab:~$ sudo ufw allow 54621/tcp
 Rule added
 Rule added (v6)
-nastya@ubuntulab:~$ 
 
+#вносим изменения в /etc/fstab, чтобы удаленный каталог монтировался при запуске системы
 nastya@ubuntulab:~$ sudo vim /etc/fstab
 nastya@ubuntulab:~$ sudo cat /etc/fstab
 
@@ -51,6 +57,8 @@ UUID=FC66-1F35  /boot/efi       vfat    umask=0077      0       1
 /dev/mapper/vgubuntu-swap_1 none            swap    sw              0       0
 192.168.0.102:/share	/mnt	nfs 	nfsvers=3		0	0 
 
+#после добавлениия директории upload на сервере, проверяем, что в каталоге /share на клиенте нельзя ничего создать
+#также убедимся, что в каталоге upload можно что-то создавать
 nastya@ubuntulab:~$ cd /mnt/
 nastya@ubuntulab:/mnt$ ls
 file  upload
@@ -60,4 +68,3 @@ nastya@ubuntulab:/mnt$ cd upload/
 nastya@ubuntulab:/mnt/upload$ touch test
 nastya@ubuntulab:/mnt/upload$ ls
 test
- 
